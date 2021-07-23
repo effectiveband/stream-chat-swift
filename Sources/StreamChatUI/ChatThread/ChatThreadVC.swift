@@ -12,7 +12,6 @@ public typealias ChatThreadVC = _ChatThreadVC<NoExtraData>
 open class _ChatThreadVC<ExtraData: ExtraDataTypes>:
     _ViewController,
     ThemeProvider,
-    ComposerVCDelegate,
     _ChatChannelControllerDelegate,
     _ChatMessageControllerDelegate,
     _ChatMessageActionsVCDelegate,
@@ -91,7 +90,6 @@ open class _ChatThreadVC<ExtraData: ExtraDataTypes>:
         tapOnList.delegate = self
         listView.addGestureRecognizer(tapOnList)
         
-        messageComposerVC.setDelegate(self)
         messageComposerVC.channelController = channelController
         messageComposerVC.userSearchController = userSuggestionSearchController
         if let message = messageController.message {
@@ -181,7 +179,10 @@ open class _ChatThreadVC<ExtraData: ExtraDataTypes>:
 
     /// Returns the attachment view injector class for the message at given `ChatMessage`
     open func attachmentViewInjectorClass(for message: _ChatMessage<ExtraData>) -> _AttachmentViewInjector<ExtraData>.Type? {
-        components.attachmentViewCatalog.attachmentViewInjectorClassFor(message: message, components: components)
+        components.attachmentViewCatalog.attachmentViewInjectorClassFor(
+            message: message,
+            components: components
+        )
     }
 
     /// Returns layout options for the message on given `indexPath`.
