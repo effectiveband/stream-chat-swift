@@ -5,6 +5,16 @@
 import StreamChat
 import UIKit
 
+public protocol _ChatMessageListVCDelegate: AnyObject {
+    associatedtype ExtraData: ExtraDataTypes
+
+    func chatMessageList(
+        _ vc: _ChatMessageListVC<ExtraData>,
+        didSelectMessage message: _ChatMessage<ExtraData>,
+        messageContentView: _ChatMessageContentView<ExtraData>
+    )
+}
+
 /// Controller that shows list of messages and composer together in the selected channel.
 public typealias ChatMessageListVC = _ChatMessageListVC<NoExtraData>
 
@@ -12,9 +22,7 @@ public typealias ChatMessageListVC = _ChatMessageListVC<NoExtraData>
 open class _ChatMessageListVC<ExtraData: ExtraDataTypes>:
     _ViewController,
     ThemeProvider,
-    ComposerVCDelegate,
     _ChatChannelControllerDelegate,
-    _ChatMessageActionsVCDelegate,
     ChatMessageContentViewDelegate,
     UITableViewDelegate,
     UITableViewDataSource,
@@ -30,27 +38,11 @@ open class _ChatMessageListVC<ExtraData: ExtraDataTypes>:
     public var client: _ChatClient<ExtraData> {
         channelController.client
     }
-    
-    /// Observer responsible for setting the correct offset when keyboard frame is changed
-    open lazy var keyboardObserver = ChatMessageListKeyboardObserver(
-        containerView: view,
-        composerBottomConstraint: messageComposerBottomConstraint,
-        viewController: self
-    )
 
-    /// User search controller passed directly to the composer
-    open lazy var userSuggestionSearchController: _ChatUserSearchController<ExtraData> =
-        client.userSearchController()
-    
-    override open func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        view.layoutIfNeeded()
-    }
+    public var delegate: Delegate?
 
-    /// The header view of the message list that by default is the titleView of the navigation bar.
-    open private(set) lazy var headerView: _ChatChannelHeaderView<ExtraData> = components
-        .channelHeaderView.init()
-        .withoutAutoresizingMaskConstraints
+    /// A router object that handles navigation to other view controllers.
+    open var router: _ChatMessageListRouter<ExtraData>!
     
     /// View used to display the messages
     open private(set) lazy var listView: _ChatMessageListView<ExtraData> = {
@@ -69,23 +61,16 @@ open class _ChatMessageListVC<ExtraData: ExtraDataTypes>:
         overlay.dataSource = self
         return overlay
     }()
-    
-    /// Controller that handles the composer view
-    open private(set) lazy var messageComposerVC = components
-        .messageComposerVC
-        .init()
-    
-    /// View for displaying the channel image in the navigation bar.
-    open private(set) lazy var channelAvatarView = components
-        .channelAvatarView.init()
-        .withoutAutoresizingMaskConstraints
-    
+
     /// View which displays information about current users who are typing.
     open private(set) lazy var typingIndicatorView: _TypingIndicatorView<ExtraData> = components
         .typingIndicatorView
         .init()
         .withoutAutoresizingMaskConstraints
-    
+
+    /// The height of the typing indicator view
+    open private(set) var typingIndicatorViewHeight: CGFloat = 22
+
     /// A button to scroll the collection view to the bottom.
     ///
     /// Visible when there is unread message and the collection view is not at the bottom already.
@@ -94,17 +79,10 @@ open class _ChatMessageListVC<ExtraData: ExtraDataTypes>:
         .init()
         .withoutAutoresizingMaskConstraints
 
-    /// A router object that handles navigation to other view controllers.
-    open lazy var router = components
-        .messageListRouter
-        .init(rootViewController: self)
-
-    /// The height of the typing indicator view
-    open private(set) var typingIndicatorViewHeight: CGFloat = 22
-    
-    /// Constraint connection list of messages and composer controller.
-    /// It's used to change the message list's height based on the keyboard visibility.
-    private var messageComposerBottomConstraint: NSLayoutConstraint?
+    override open func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        view.layoutIfNeeded()
+    }
     
     override open func setUp() {
         super.setUp()
@@ -118,46 +96,22 @@ open class _ChatMessageListVC<ExtraData: ExtraDataTypes>:
         tapOnList.delegate = self
         listView.addGestureRecognizer(tapOnList)
         
-        messageComposerVC.setDelegate(self)
-        messageComposerVC.channelController = channelController
-        messageComposerVC.userSearchController = userSuggestionSearchController
-        
         channelController.setDelegate(self)
-        channelController.synchronize { [weak self] _ in
-            self?.messageComposerVC.updateContent()
-        }
         
         scrollToLatestMessageButton.addTarget(self, action: #selector(scrollToLatestMessage), for: .touchUpInside)
-
-        channelAvatarView.content = (channelController.channel, client.currentUserId)
-
-        if let cid = channelController.cid {
-            headerView.channelController = client.channelController(for: cid)
-        }
-        navigationItem.titleView = headerView
     }
     
     override open func setUpLayout() {
         super.setUpLayout()
-        
-        view.addSubview(listView)
-        listView.pin(anchors: [.top, .leading, .trailing], to: view.safeAreaLayoutGuide)
-        listView.contentInset.bottom += max(listView.layoutMargins.right, listView.layoutMargins.left)
-        
-        messageComposerVC.view.translatesAutoresizingMaskIntoConstraints = false
-        addChildViewController(messageComposerVC, targetView: view)
 
-        messageComposerVC.view.topAnchor.pin(equalTo: listView.bottomAnchor).isActive = true
-        messageComposerVC.view.leadingAnchor.pin(equalTo: view.leadingAnchor).isActive = true
-        messageComposerVC.view.trailingAnchor.pin(equalTo: view.trailingAnchor).isActive = true
-        messageComposerBottomConstraint = messageComposerVC.view.bottomAnchor.pin(equalTo: view.bottomAnchor)
-        messageComposerBottomConstraint?.isActive = true
+        view.addSubview(listView)
+        listView.pin(anchors: [.top, .leading, .trailing, .bottom], to: view)
         
         if channelController.areTypingEventsEnabled {
             view.addSubview(typingIndicatorView)
             typingIndicatorView.heightAnchor.pin(equalToConstant: typingIndicatorViewHeight).isActive = true
             typingIndicatorView.pin(anchors: [.leading, .trailing], to: view)
-            typingIndicatorView.bottomAnchor.pin(equalTo: messageComposerVC.view.topAnchor).isActive = true
+            typingIndicatorView.bottomAnchor.pin(equalTo: listView.bottomAnchor).isActive = true
             typingIndicatorView.isHidden = true
         }
         
@@ -167,12 +121,6 @@ open class _ChatMessageListVC<ExtraData: ExtraDataTypes>:
         scrollToLatestMessageButton.widthAnchor.pin(equalTo: scrollToLatestMessageButton.heightAnchor).isActive = true
         scrollToLatestMessageButton.heightAnchor.pin(equalToConstant: 40).isActive = true
         setScrollToLatestMessageButton(visible: false, animated: false)
-        
-        NSLayoutConstraint.activate([
-            channelAvatarView.widthAnchor.pin(equalTo: channelAvatarView.heightAnchor),
-            channelAvatarView.heightAnchor.pin(equalToConstant: 32)
-        ])
-        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: channelAvatarView)
         
         view.addSubview(dateOverlayView)
         NSLayoutConstraint.activate([
@@ -188,26 +136,6 @@ open class _ChatMessageListVC<ExtraData: ExtraDataTypes>:
         view.backgroundColor = appearance.colorPalette.background
         
         listView.backgroundColor = appearance.colorPalette.background
-    }
-
-    override open func viewDidLoad() {
-        super.viewDidLoad()
-        
-        navigationItem.largeTitleDisplayMode = .never
-    }
-    
-    override open func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        
-        keyboardObserver.register()
-    }
-
-    override open func viewDidDisappear(_ animated: Bool) {
-        super.viewDidDisappear(animated)
-        
-        resignFirstResponder()
-        
-        keyboardObserver.unregister()
     }
     
     /// Returns layout options for the message on given `indexPath`.
@@ -334,32 +262,7 @@ open class _ChatMessageListVC<ExtraData: ExtraDataTypes>:
             message.isInteractionEnabled == true
         else { return }
 
-        let messageController = channelController.client.messageController(
-            cid: channelController.cid!,
-            messageId: message.id
-        )
-
-        let actionsController = components.messageActionsVC.init()
-        actionsController.messageController = messageController
-        actionsController.channelConfig = channelController.channel?.config
-        actionsController.delegate = .init(delegate: self)
-
-        let reactionsController: _ChatMessageReactionsVC<ExtraData>? = {
-            guard message.localState == nil else { return nil }
-            guard channelController.channel?.config.reactionsEnabled == true else {
-                return nil
-            }
-
-            let controller = components.messageReactionsVC.init()
-            controller.messageController = messageController
-            return controller
-        }()
-
-        router.showMessageActionsPopUp(
-            messageContentView: messageContentView,
-            messageActionsController: actionsController,
-            messageReactionsController: reactionsController
-        )
+        delegate?.didSelectMessage(self, message, messageContentView)
     }
 
     // MARK: - Cell action handlers
@@ -427,16 +330,6 @@ open class _ChatMessageListVC<ExtraData: ExtraDataTypes>:
             )
             .dispatchEphemeralMessageAction(action)
     }
-    
-    /// Opens thread detail for given `message`
-    open func showThread(messageId: MessageId) {
-        guard let cid = channelController.cid else { log.error("Channel is not available"); return }
-        router.showThread(
-            messageId: messageId,
-            cid: cid,
-            client: client
-        )
-    }
 
     // MARK: - _ComposerVCDelegate
 
@@ -455,7 +348,6 @@ open class _ChatMessageListVC<ExtraData: ExtraDataTypes>:
         _ channelController: _ChatChannelController<ExtraData>,
         didUpdateChannel channel: EntityChange<_ChatChannel<ExtraData>>
     ) {
-        channelAvatarView.content = (channelController.channel, client.currentUserId)
         updateScrollToLatestMessageButton()
     }
     
@@ -512,35 +404,6 @@ open class _ChatMessageListVC<ExtraData: ExtraDataTypes>:
             self.listView.scrollIndicatorInsets.top -= self.typingIndicatorViewHeight
         }
     }
-    
-    // MARK: - _ChatMessageActionsVCDelegate
-
-    open func chatMessageActionsVC(
-        _ vc: _ChatMessageActionsVC<ExtraData>,
-        message: _ChatMessage<ExtraData>,
-        didTapOnActionItem actionItem: ChatMessageActionItem
-    ) {
-        switch actionItem {
-        case is EditActionItem:
-            dismiss(animated: true) { [weak self] in
-                self?.messageComposerVC.content.editMessage(message)
-            }
-        case is InlineReplyActionItem:
-            dismiss(animated: true) { [weak self] in
-                self?.messageComposerVC.content.quoteMessage(message)
-            }
-        case is ThreadReplyActionItem:
-            dismiss(animated: true) { [weak self] in
-                self?.showThread(messageId: message.parentMessageId ?? message.id)
-            }
-        default:
-            return
-        }
-    }
-
-    open func chatMessageActionsVCDidFinish(_ vc: _ChatMessageActionsVC<ExtraData>) {
-        dismiss(animated: true)
-    }
 
     // MARK: - ChatMessageContentViewDelegate
 
@@ -589,11 +452,46 @@ open class _ChatMessageListVC<ExtraData: ExtraDataTypes>:
         
         return !listView.isLastCellFullyVisible && isMoreContentThanOnePage
     }
+
+    /// Opens thread detail for given `message`
+    open func showThread(messageId: MessageId) {
+        guard let cid = channelController.cid else { log.error("Channel is not available"); return }
+        router.showThread(
+            messageId: messageId,
+            cid: cid,
+            client: client
+        )
+    }
     
     // MARK: - UIGestureRecognizerDelegate
     
     open func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
         // To prevent the gesture recognizer consuming up the events from UIControls, we receive touch only when the view isn't a UIControl.
         !(touch.view is UIControl)
+    }
+}
+
+// MARK: - Delegate
+
+public extension _ChatMessageListVC {
+    /// Delegate instance for `_ChatMessageActionsVC`.
+    struct Delegate {
+        public var didSelectMessage: (_ChatMessageListVC, _ChatMessage<ExtraData>, _ChatMessageContentView<ExtraData>) -> Void
+
+        /// Init of `_ChatMessageActionsVC.Delegate`.
+        public init(
+            didSelectMessage: @escaping (_ChatMessageListVC, _ChatMessage<ExtraData>, _ChatMessageContentView<ExtraData>) -> Void
+        ) {
+            self.didSelectMessage = didSelectMessage
+        }
+
+        /// Wraps `_ChatMessageActionsVCDelegate` into `_ChatMessageActionsVC.Delegate`.
+        public init<Delegate: _ChatMessageListVCDelegate>(delegate: Delegate) where Delegate.ExtraData == ExtraData {
+            self.init(
+                didSelectMessage: { [weak delegate] in
+                    delegate?.chatMessageList($0, didSelectMessage: $1, messageContentView: $2)
+                }
+            )
+        }
     }
 }
