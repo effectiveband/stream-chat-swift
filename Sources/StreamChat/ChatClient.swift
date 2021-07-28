@@ -268,7 +268,14 @@ public class _ChatClient<ExtraData: ExtraDataTypes> {
             // All production event workers
             eventWorkerBuilders = [
                 ChannelWatchStateUpdater<ExtraData>.init,
-                MissingEventsPublisher<ExtraData>.init
+                {
+                    MissingEventsPublisher<ExtraData>(
+                        database: $0,
+                        eventNotificationCenter: $1,
+                        apiClient: $2,
+                        isLocalStorageEnabled: config.isLocalStorageEnabled
+                    )
+                }
             ]
         } else {
             workerBuilders = []
