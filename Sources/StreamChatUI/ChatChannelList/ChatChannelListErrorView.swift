@@ -5,9 +5,7 @@
 import StreamChat
 import UIKit
 
-typealias ChatChannelListErrorView = _ChatChannelListErrorView<NoExtraData>
-
-open class _ChatChannelListErrorView<ExtraData: ExtraDataTypes>: _View, ThemeProvider {
+open class ChatChannelListErrorView: _View, ThemeProvider {
     open var buttonAction: (() -> Void)?
     
     /// Label describing there has been an error.

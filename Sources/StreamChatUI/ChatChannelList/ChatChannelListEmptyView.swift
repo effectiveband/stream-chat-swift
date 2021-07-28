@@ -5,9 +5,7 @@
 import StreamChat
 import UIKit
 
-typealias ChatChannelListEmptyView = _ChatChannelListEmptyView<NoExtraData>
-
-open class _ChatChannelListEmptyView<ExtraData: ExtraDataTypes>: _View, ThemeProvider {
+open class ChatChannelListEmptyView: _View, ThemeProvider {
     public var buttonAction: (() -> Void)?
     
     /// Main container which holds all elements except action button in this view.

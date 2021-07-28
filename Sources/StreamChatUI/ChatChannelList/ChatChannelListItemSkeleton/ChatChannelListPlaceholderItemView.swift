@@ -7,11 +7,7 @@ import UIKit
 
 /// An `UIView` subclass that shows placeholder for `ChatChannelListItemView`.
 /// By default, it carries over layout of `ChatChannelListItemView`
-public typealias ChatChannelListPlaceholderItemView = _ChatChannelListItemView<NoExtraData>
-
-/// An `UIView` subclass that shows placeholder for `ChatChannelListItemView`.
-/// By default, it carries over layout of `ChatChannelListItemView`
-open class _ChatChannelListPlaceholderItemView<ExtraData: ExtraDataTypes>: _View, ThemeProvider, SwiftUIRepresentable {
+open class ChatChannelListPlaceholderItemView: _View, ThemeProvider, SwiftUIRepresentable {
     /// The data this view component shows.
     public var content: String? {
         didSet { updateContentIfNeeded() }

@@ -6,9 +6,7 @@ import StreamChat
 import UIKit
 
 /// View responsible for displaying loading indicator for ChannelListVC.
-typealias ChatChannelListLoadingView = _ChatChannelListLoadingView<NoExtraData>
-/// View responsible for displaying loading indicator for ChannelListVC.
-open class _ChatChannelListLoadingView<ExtraData: ExtraDataTypes>: _View, ThemeProvider, UICollectionViewDelegate,
+open class ChatChannelListLoadingView: _View, ThemeProvider, UICollectionViewDelegate,
     UICollectionViewDataSource {
     /// The `UICollectionViewLayout` that used by `ChatChannelListCollectionView`.
     open private(set) lazy var collectionViewLayout: UICollectionViewLayout = components
@@ -81,7 +79,7 @@ open class _ChatChannelListLoadingView<ExtraData: ExtraDataTypes>: _View, ThemeP
         let cell = collectionView.dequeueReusableCell(
             withReuseIdentifier: collectionViewCellReuseIdentifier,
             for: indexPath
-        ) as! _ChatChannelListPlaceholderCollectionViewCell<ExtraData>
+        ) as! _ChatChannelListPlaceholderCollectionViewCell
     
         cell.components = components
         return cell

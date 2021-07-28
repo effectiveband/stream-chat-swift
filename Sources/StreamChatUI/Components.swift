@@ -12,6 +12,9 @@ public struct Components {
 
     /// A view used as an online activity indicator (online/offline).
     public var onlineIndicatorView: (UIView & MaskProviding).Type = OnlineIndicatorView.self
+    
+    /// A view used as an online activity indicator (online/offline).
+    public var skeletonView: UIView.Type = SkeletonView.self
 
     /// A view that displays the avatar image. By default a circular image.
     public var avatarView: ChatAvatarView.Type = ChatAvatarView.self
@@ -217,7 +220,20 @@ public struct Components {
 
     /// The `UICollectionViewCell` subclass that shows channel information.
     public var channelCell: ChatChannelListCollectionViewCell.Type = ChatChannelListCollectionViewCell.self
-
+    
+    /// The `UICollectionViewCell` subclass that shows placeholder for channel information.
+    public var channelPlaceholderCell: ChatChannelListPlaceholderCollectionViewCell.Type =
+        ChatChannelListPlaceholderCollectionViewCell.self
+    
+    /// The view which is displayed when there is yet no channel for user in channelList.
+    public var channelListEmptyView: UIView.Type = ChatChannelListEmptyView.self
+    
+    /// The view to be displayed when remote data for channelList are being fetched.
+    public var channelListLoadingView: UIView.Type = ChatChannelListLoadingView.self
+    
+    /// View that shows that some error occurred on ChatChannelList.
+    public var channelListErrorView: UIView.Type = ChatChannelListErrorView.self
+    
     /// The channel cell separator in the channel list.
     public var channelCellSeparator: UICollectionReusableView.Type = CellSeparatorReusableView.self
 
@@ -226,6 +242,10 @@ public struct Components {
     
     /// The view that shows channel information.
     public var channelContentView: ChatChannelListItemView.Type = ChatChannelListItemView.self
+    
+    /// The view that shows placeholder for channel information.
+    public var channelPlaceholderContentView: ChatChannelListPlaceholderItemView
+        .Type = ChatChannelListPlaceholderItemView.self
 
     /// The view that shows a user avatar including an indicator of the user presence (online/offline).
     public var channelAvatarView: ChatChannelAvatarView.Type = ChatChannelAvatarView.self

@@ -7,14 +7,10 @@ import UIKit
 
 /// A `UICollectionViewCell` subclass that shows channel information.
 /// By default, it carries over layout of `ChatChannelListCollectionViewCell`
-public typealias ChatChannelListPlaceholderCollectionViewCell = _ChatChannelListCollectionViewCell<NoExtraData>
-
-/// A `UICollectionViewCell` subclass that shows channel information.
-/// By default, it carries over layout of `ChatChannelListCollectionViewCell`
-open class _ChatChannelListPlaceholderCollectionViewCell<ExtraData: ExtraDataTypes>: _CollectionViewCell,
+open class ChatChannelListPlaceholderCollectionViewCell: CollectionViewCell,
     ThemeProvider {
     /// The `ChatChannelListPlaceholderItemView` instance used as content view.
-    open private(set) lazy var itemView: _ChatChannelListPlaceholderItemView<ExtraData> = components
+    open private(set) lazy var itemView: _ChatChannelListPlaceholderItemView = components
         .channelPlaceholderContentView
         .init()
         .withoutAutoresizingMaskConstraints
