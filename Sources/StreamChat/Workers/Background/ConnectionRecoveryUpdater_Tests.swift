@@ -8,13 +8,11 @@ import CoreData
 import XCTest
 
 final class ConnectionRecoveryUpdater_Tests: StressTestCase {
-    typealias ExtraData = NoExtraData
-    
     var database: DatabaseContainerMock!
     var webSocketClient: WebSocketClientMock!
     var apiClient: APIClientMock!
-    var updater: ConnectionRecoveryUpdater<ExtraData>?
-    var channelDatabaseCleanupUpdater: DatabaseCleanupUpdater_Mock<ExtraData>!
+    var updater: ConnectionRecoveryUpdater?
+    var channelDatabaseCleanupUpdater: DatabaseCleanupUpdater_Mock!
     
     // MARK: - Setup
     
@@ -111,7 +109,7 @@ final class ConnectionRecoveryUpdater_Tests: StressTestCase {
         webSocketClient.simulateConnectionStatus(.connected(connectionId: .unique))
         
         // Assert endpoint is called with correct values
-        let endpoint: Endpoint<MissingEventsPayload<ExtraData>> = .missingEvents(
+        let endpoint: Endpoint<MissingEventsPayload> = .missingEvents(
             since: lastReceivedEventDate,
             cids: [cid]
         )
@@ -155,7 +153,7 @@ final class ConnectionRecoveryUpdater_Tests: StressTestCase {
         AssertAsync.willBeEqual(apiClient.request_allRecordedCalls.count, 1)
         
         // Simulate error response
-        apiClient.test_simulateResponse(Result<MissingEventsPayload<ExtraData>, Error>.failure(TestError()))
+        apiClient.test_simulateResponse(Result<MissingEventsPayload, Error>.failure(TestError()))
         
         // Assert no events are published
         AssertAsync.staysTrue(eventCenter.process_loggedEvents.isEmpty)
@@ -197,7 +195,7 @@ final class ConnectionRecoveryUpdater_Tests: StressTestCase {
         }
         
         apiClient.test_simulateResponse(
-            Result<MissingEventsPayload<ExtraData>, Error>.failure(
+            Result<MissingEventsPayload, Error>.failure(
                 ClientError(with: ErrorPayload(code: 0, message: "", statusCode: 400))
             )
         )
@@ -217,7 +215,7 @@ final class ConnectionRecoveryUpdater_Tests: StressTestCase {
             useSyncEndpoint: true
         )
         let json = XCTestCase.mockData(fromFile: "MissingEventsPayload")
-        let payload = try JSONDecoder.default.decode(MissingEventsPayload<ExtraData>.self, from: json)
+        let payload = try JSONDecoder.default.decode(MissingEventsPayload.self, from: json)
         let events = payload.eventPayloads.compactMap { try? $0.event() }
         
         // Create current user in the database
@@ -242,7 +240,7 @@ final class ConnectionRecoveryUpdater_Tests: StressTestCase {
         AssertAsync.willBeEqual(apiClient.request_allRecordedCalls.count, 1)
         
         // Simulate successful response
-        apiClient.test_simulateResponse(Result<MissingEventsPayload<ExtraData>, Error>.success(payload))
+        apiClient.test_simulateResponse(Result<MissingEventsPayload, Error>.success(payload))
         
         // Assert events from payload are published
         AssertAsync.willBeEqual(eventCenter.process_loggedEvents.map(\.asEquatable), events.map(\.asEquatable))
@@ -280,7 +278,7 @@ final class ConnectionRecoveryUpdater_Tests: StressTestCase {
 
         // Simulate successful response
         apiClient.test_simulateResponse(
-            Result<MissingEventsPayload<ExtraData>, Error>.success(MissingEventsPayload(eventPayloads: []))
+            Result<MissingEventsPayload, Error>.success(MissingEventsPayload(eventPayloads: []))
         )
 
         // Assert only `refetchExistingChannelListQueries` is called
@@ -320,7 +318,7 @@ final class ConnectionRecoveryUpdater_Tests: StressTestCase {
         AssertAsync.willBeTrue(apiClient.request_endpoint != nil)
         
         apiClient.test_simulateResponse(
-            Result<MissingEventsPayload<ExtraData>, Error>.success(
+            Result<MissingEventsPayload, Error>.success(
                 MissingEventsPayload(eventPayloads: [])
             )
         )

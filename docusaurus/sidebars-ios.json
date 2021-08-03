@@ -10,7 +10,27 @@
     {
       "Customization": [
         "customization/theming",
+        "customization/localization",
         "customization/custom-components"
+      ]
+    },
+    {
+      "Controllers and Delegates": [
+        "controllers/controllers-overview",
+        "controllers/connection",
+        "controllers/channels",
+        "controllers/users",
+        "controllers/messages"
+      ]
+    },
+    {
+      "Combine" : [
+        "combine/combine-overview",
+        "combine/connection",
+        "combine/channels",
+        "combine/users",
+        "combine/messages",
+        "combine/events"
       ]
     },
     {

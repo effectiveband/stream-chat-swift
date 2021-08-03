@@ -17,11 +17,11 @@ import Foundation
 /// We remember `lastReceivedEventDate` when state becomes `connecting` to catch the last event date
 /// before the `HealthCheck` override the `lastReceivedEventDate` with the recent date.
 ///
-class ConnectionRecoveryUpdater<ExtraData: ExtraDataTypes>: EventWorker {
+class ConnectionRecoveryUpdater: EventWorker {
     // MARK: - Properties
     
     private var connectionObserver: EventObserver?
-    private let databaseCleanupUpdater: DatabaseCleanupUpdater<ExtraData>
+    private let databaseCleanupUpdater: DatabaseCleanupUpdater
     @Atomic private var lastSyncedAt: Date?
     private let useSyncEndpoint: Bool
     
@@ -62,7 +62,7 @@ class ConnectionRecoveryUpdater<ExtraData: ExtraDataTypes>: EventWorker {
         database: DatabaseContainer,
         eventNotificationCenter: EventNotificationCenter,
         apiClient: APIClient,
-        databaseCleanupUpdater: DatabaseCleanupUpdater<ExtraData>,
+        databaseCleanupUpdater: DatabaseCleanupUpdater,
         useSyncEndpoint: Bool
     ) {
         self.databaseCleanupUpdater = databaseCleanupUpdater
@@ -124,7 +124,7 @@ class ConnectionRecoveryUpdater<ExtraData: ExtraDataTypes>: EventWorker {
             return
         }
         
-        let endpoint: Endpoint<MissingEventsPayload<ExtraData>> = .missingEvents(
+        let endpoint: Endpoint<MissingEventsPayload> = .missingEvents(
             since: lastSyncedAt,
             cids: watchedChannelIDs
         )
@@ -183,7 +183,7 @@ private extension EventNotificationCenter {
     /// that was successfully decoded.
     ///
     /// - Parameter payloads: The event payloads
-    func process<ExtraData: ExtraDataTypes>(_ payloads: [EventPayload<ExtraData>]) {
+    func process(_ payloads: [EventPayload]) {
         payloads.forEach {
             do {
                 process(try $0.event())

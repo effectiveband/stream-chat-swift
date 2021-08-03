@@ -5,7 +5,7 @@
 import CoreData
 
 /// Makes a channels query call to the backend and updates the local storage with the results.
-class ChannelListUpdater<ExtraData: ExtraDataTypes>: Worker {
+class ChannelListUpdater: Worker {
     /// Makes a channels query call to the backend and updates the local storage with the results.
     ///
     /// - Parameters:
@@ -13,13 +13,13 @@ class ChannelListUpdater<ExtraData: ExtraDataTypes>: Worker {
     ///   - completion: Called when the API call is finished. Called with `Error` if the remote update fails.
     ///
     func update(
-        channelListQuery: _ChannelListQuery<ExtraData.Channel>,
+        channelListQuery: ChannelListQuery,
         trumpExistingChannels: Bool = false,
         completion: ((Error?) -> Void)? = nil
     ) {
         apiClient
             .request(endpoint: .channels(query: channelListQuery)) { [weak self] (result: Result<
-                ChannelListPayload<ExtraData>,
+                ChannelListPayload,
                 Error
             >) in
                 switch result {

@@ -6,8 +6,8 @@
 import XCTest
 
 /// Mock implementation of ChannelListUpdater
-class ChannelListUpdaterMock<ExtraData: ExtraDataTypes>: ChannelListUpdater<ExtraData> {
-    @Atomic var update_queries: [_ChannelListQuery<ExtraData.Channel>] = []
+class ChannelListUpdaterMock: ChannelListUpdater {
+    @Atomic var update_queries: [ChannelListQuery] = []
     @Atomic var update_completion: ((Error?) -> Void)?
     
     @Atomic var markAllRead_completion: ((Error?) -> Void)?
@@ -20,7 +20,7 @@ class ChannelListUpdaterMock<ExtraData: ExtraDataTypes>: ChannelListUpdater<Extr
     }
     
     override func update(
-        channelListQuery: _ChannelListQuery<ExtraData.Channel>,
+        channelListQuery: ChannelListQuery,
         trumpExistingChannels: Bool = false,
         completion: ((Error?) -> Void)? = nil
     ) {
