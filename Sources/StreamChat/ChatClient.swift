@@ -267,13 +267,12 @@ public class _ChatClient<ExtraData: ExtraDataTypes> {
             
             // All production event workers
             eventWorkerBuilders = [
-                ChannelWatchStateUpdater<ExtraData>.init,
                 {
-                    MissingEventsPublisher<ExtraData>(
+                    ConnectionRecoveryUpdater<ExtraData>(
                         database: $0,
                         eventNotificationCenter: $1,
                         apiClient: $2,
-                        isLocalStorageEnabled: config.isLocalStorageEnabled
+                        useSyncEndpoint: config.isLocalStorageEnabled
                     )
                 }
             ]

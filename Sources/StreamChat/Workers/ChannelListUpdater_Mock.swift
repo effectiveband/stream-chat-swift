@@ -19,7 +19,11 @@ class ChannelListUpdaterMock<ExtraData: ExtraDataTypes>: ChannelListUpdater<Extr
         markAllRead_completion = nil
     }
     
-    override func update(channelListQuery: _ChannelListQuery<ExtraData.Channel>, completion: ((Error?) -> Void)? = nil) {
+    override func update(
+        channelListQuery: _ChannelListQuery<ExtraData.Channel>,
+        trumpExistingChannels: Bool = false,
+        completion: ((Error?) -> Void)? = nil
+    ) {
         _update_queries.mutate { $0.append(channelListQuery) }
         update_completion = completion
     }

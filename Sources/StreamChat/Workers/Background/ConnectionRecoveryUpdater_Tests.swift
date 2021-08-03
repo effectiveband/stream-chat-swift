@@ -7,13 +7,13 @@ import CoreData
 @testable import StreamChatTestTools
 import XCTest
 
-final class MissingEventsPublisher_Tests: StressTestCase {
+final class ConnectionRecoveryUpdater_Tests: StressTestCase {
     typealias ExtraData = NoExtraData
     
     var database: DatabaseContainerMock!
     var webSocketClient: WebSocketClientMock!
     var apiClient: APIClientMock!
-    var publisher: MissingEventsPublisher<ExtraData>?
+    var updater: ConnectionRecoveryUpdater<ExtraData>?
     var channelDatabaseCleanupUpdater: DatabaseCleanupUpdater_Mock<ExtraData>!
     
     // MARK: - Setup
@@ -26,11 +26,12 @@ final class MissingEventsPublisher_Tests: StressTestCase {
         apiClient = APIClientMock()
         channelDatabaseCleanupUpdater = DatabaseCleanupUpdater_Mock(database: database, apiClient: apiClient)
         
-        publisher = MissingEventsPublisher(
+        updater = ConnectionRecoveryUpdater(
             database: database,
             eventNotificationCenter: webSocketClient.eventNotificationCenter,
             apiClient: apiClient,
-            databaseCleanupUpdater: channelDatabaseCleanupUpdater
+            databaseCleanupUpdater: channelDatabaseCleanupUpdater,
+            useSyncEndpoint: false
         )
     }
     
@@ -38,7 +39,7 @@ final class MissingEventsPublisher_Tests: StressTestCase {
         apiClient.cleanUp()
 
         AssertAsync {
-            Assert.canBeReleased(&publisher)
+            Assert.canBeReleased(&updater)
             Assert.canBeReleased(&database)
             Assert.canBeReleased(&webSocketClient)
             Assert.canBeReleased(&apiClient)
@@ -81,6 +82,13 @@ final class MissingEventsPublisher_Tests: StressTestCase {
     }
     
     func test_endpointIsCalled_whenStatusBecomesConnected() throws {
+        updater = ConnectionRecoveryUpdater(
+            database: database,
+            eventNotificationCenter: webSocketClient.eventNotificationCenter,
+            apiClient: apiClient,
+            databaseCleanupUpdater: channelDatabaseCleanupUpdater,
+            useSyncEndpoint: true
+        )
         let cid: ChannelId = .unique
         let lastReceivedEventDate: Date = .unique
         
@@ -112,6 +120,13 @@ final class MissingEventsPublisher_Tests: StressTestCase {
     }
     
     func test_noEventsArePublished_ifErrorResponseComes() throws {
+        updater = ConnectionRecoveryUpdater(
+            database: database,
+            eventNotificationCenter: webSocketClient.eventNotificationCenter,
+            apiClient: apiClient,
+            databaseCleanupUpdater: channelDatabaseCleanupUpdater,
+            useSyncEndpoint: true
+        )
         let cid: ChannelId = .unique
 
         // Create current user in the database
@@ -147,6 +162,13 @@ final class MissingEventsPublisher_Tests: StressTestCase {
     }
     
     func test_whenBackendRespondsWith400_callsChannelListCleanUp() throws {
+        updater = ConnectionRecoveryUpdater(
+            database: database,
+            eventNotificationCenter: webSocketClient.eventNotificationCenter,
+            apiClient: apiClient,
+            databaseCleanupUpdater: channelDatabaseCleanupUpdater,
+            useSyncEndpoint: true
+        )
         let cid: ChannelId = .unique
 
         try database.createCurrentUser()
@@ -187,6 +209,13 @@ final class MissingEventsPublisher_Tests: StressTestCase {
     }
     
     func test_eventsFromPayloadArePublished_ifSuccessfulResponseComes() throws {
+        updater = ConnectionRecoveryUpdater(
+            database: database,
+            eventNotificationCenter: webSocketClient.eventNotificationCenter,
+            apiClient: apiClient,
+            databaseCleanupUpdater: channelDatabaseCleanupUpdater,
+            useSyncEndpoint: true
+        )
         let json = XCTestCase.mockData(fromFile: "MissingEventsPayload")
         let payload = try JSONDecoder.default.decode(MissingEventsPayload<ExtraData>.self, from: json)
         let events = payload.eventPayloads.compactMap { try? $0.event() }
@@ -220,6 +249,13 @@ final class MissingEventsPublisher_Tests: StressTestCase {
     }
 
     func test_existingQueriesAreRefetched_ifSuccessfulResponseComes() throws {
+        updater = ConnectionRecoveryUpdater(
+            database: database,
+            eventNotificationCenter: webSocketClient.eventNotificationCenter,
+            apiClient: apiClient,
+            databaseCleanupUpdater: channelDatabaseCleanupUpdater,
+            useSyncEndpoint: true
+        )
         // Create the current user and a channel in the database
         try database.createCurrentUser()
         try database.createChannel(cid: .unique)
@@ -255,6 +291,13 @@ final class MissingEventsPublisher_Tests: StressTestCase {
     }
     
     func test_eventPublisher_doesNotRetainItself() throws {
+        updater = ConnectionRecoveryUpdater(
+            database: database,
+            eventNotificationCenter: webSocketClient.eventNotificationCenter,
+            apiClient: apiClient,
+            databaseCleanupUpdater: channelDatabaseCleanupUpdater,
+            useSyncEndpoint: true
+        )
         // Create current user in the database
         try database.createCurrentUser()
         
@@ -276,7 +319,15 @@ final class MissingEventsPublisher_Tests: StressTestCase {
         // Assert apiClient is called
         AssertAsync.willBeTrue(apiClient.request_endpoint != nil)
         
+        apiClient.test_simulateResponse(
+            Result<MissingEventsPayload<ExtraData>, Error>.success(
+                MissingEventsPayload(eventPayloads: [])
+            )
+        )
+        
+        channelDatabaseCleanupUpdater.refetchExistingChannelListQueries_body()
+        
         // Assert
-        AssertAsync.canBeReleased(&publisher)
+        AssertAsync.canBeReleased(&updater)
     }
 }
