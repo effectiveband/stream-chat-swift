@@ -258,7 +258,7 @@ public extension Message {
     /// - Parameter type: a reaction type.
     /// - Returns: true if the message has a reaction type.
     func hasOwnReaction(type: String) -> Bool {
-        !ownReactions.isEmpty && ownReactions.firstIndex(where: { $0.type == type }) != nil
+        !latestReactions.isEmpty && latestReactions.firstIndex(where: { $0.isOwn && $0.type == type }) != nil
     }
     
     /// Add a given reaction to the current user own reactions.
