@@ -111,10 +111,6 @@ open class ChatChannelListVC: _ViewController,
         errorOccurredNotificationView.bottomAnchor.pin(lessThanOrEqualTo: view.bottomAnchor).isActive = true
         
         bottomAnimationConstraint?.isActive = true
-        
-        loadingIndicator.isHidden = true
-        channelListEmptyView.isHidden = true
-        errorOccurredNotificationView.isHidden = true
     }
     
     override open func setUpAppearance() {
