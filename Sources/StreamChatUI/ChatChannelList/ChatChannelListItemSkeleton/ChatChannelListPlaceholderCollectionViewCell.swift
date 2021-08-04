@@ -7,10 +7,10 @@ import UIKit
 
 /// A `UICollectionViewCell` subclass that shows channel information.
 /// By default, it carries over layout of `ChatChannelListCollectionViewCell`
-open class ChatChannelListPlaceholderCollectionViewCell: CollectionViewCell,
+open class ChatChannelListPlaceholderCollectionViewCell: _CollectionViewCell,
     ThemeProvider {
     /// The `ChatChannelListPlaceholderItemView` instance used as content view.
-    open private(set) lazy var itemView: _ChatChannelListPlaceholderItemView = components
+    open private(set) lazy var itemView: ChatChannelListPlaceholderItemView = components
         .channelPlaceholderContentView
         .init()
         .withoutAutoresizingMaskConstraints

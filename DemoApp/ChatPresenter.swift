@@ -190,7 +190,7 @@ class DemoChannelListVC: ChatChannelListVC {
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: createChannelButton)
         createChannelButton.addTarget(self, action: #selector(didTapCreateNewChannel), for: .touchUpInside)
         
-        (channelListEmptyView as? _ChatChannelListEmptyView<ExtraData>)?.buttonAction = { [weak self] in
+        (channelListEmptyView as? ChatChannelListEmptyView)?.buttonAction = { [weak self] in
             guard let self = self else { return }
             self.didTapCreateNewChannel(self)
         }

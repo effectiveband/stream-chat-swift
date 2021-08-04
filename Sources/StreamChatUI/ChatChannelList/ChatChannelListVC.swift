@@ -15,7 +15,7 @@ open class ChatChannelListVC: _ViewController,
     ThemeProvider,
     SwipeableViewDelegate {
     /// The `ChatChannelListController` instance that provides channels data.
-    public var controller: _ChatChannelListController
+    public var controller: ChatChannelListController!
     
     /// Loading indicator which will be used as placeholder before at least localData will be fetched.
     open private(set) lazy var loadingIndicator: UIView = components

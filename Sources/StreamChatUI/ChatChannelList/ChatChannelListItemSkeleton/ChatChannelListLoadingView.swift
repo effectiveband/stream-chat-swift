@@ -79,7 +79,7 @@ open class ChatChannelListLoadingView: _View, ThemeProvider, UICollectionViewDel
         let cell = collectionView.dequeueReusableCell(
             withReuseIdentifier: collectionViewCellReuseIdentifier,
             for: indexPath
-        ) as! _ChatChannelListPlaceholderCollectionViewCell
+        ) as! ChatChannelListPlaceholderCollectionViewCell
     
         cell.components = components
         return cell
