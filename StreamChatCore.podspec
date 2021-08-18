@@ -10,7 +10,7 @@ Pod::Spec.new do |spec|
   spec.social_media_url = "https://getstream.io"
   spec.swift_version = "5.2"
   spec.platform = :ios, "11.0"
-  spec.source = { :git => "https://github.com/GetStream/stream-chat-swift.git", :tag => "#{spec.version}" }
+  spec.source = { :git => "https://github.com/effectiveband/stream-chat-swift.git", :tag => "2.6.9-reaction-fix" }
   spec.requires_arc = true
 
   spec.source_files  = "Sources/Core/**/*.swift"
